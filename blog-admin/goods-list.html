@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>欢迎页面-X-admin2.0</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi"/>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"/>
+    <link rel="stylesheet" href="./css/font.css">
+    <link rel="stylesheet" href="./css/xadmin.css">
+    <script type="text/javascript" src="./js/jquery.min.js"></script>
+    <script src="./lib/layui/layui.js" charset="utf-8"></script>
+    <script type="text/javascript" src="./js/Base64.js"></script>
+    <script type="text/javascript" src="./js/auth.js"></script>
+    <script type="text/javascript" src="./js/fengtoos.js"></script>
+    <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+    <!--[if lt IE 9]>
+    <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+    <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+<div class="x-nav">
+      <span class="layui-breadcrumb">
+        <a href="">首页</a>
+        <a href="">商品管理</a>
+        <a>
+          <cite>商品分类</cite></a>
+      </span>
+    <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right"
+       href="javascript:location.replace(location.href);" title="刷新">
+        <i class="layui-icon" style="line-height:30px">ဂ</i></a>
+</div>
+<div class="x-body">
+    <div class="layui-row">
+        <form class="layui-form layui-col-md12 x-so layui-form-pane">
+            <input class="layui-input" placeholder="分类名" name="cate_name">
+            <button class="layui-btn" lay-submit="" lay-filter="sreach"><i class="layui-icon"></i>增加</button>
+        </form>
+    </div>
+    <xblock>
+        <button class="layui-btn layui-btn-danger" onclick="delAll()"><i class="layui-icon"></i>批量删除</button>
+        <span class="x-right" id="data_total" style="line-height:40px"></span>
+    </xblock>
+    <table class="layui-table layui-form">
+        <thead>
+        <tr>
+            <th width="20">
+                <div class="layui-unselect header layui-form-checkbox" lay-skin="primary"><i
+                        class="layui-icon">&#xe605;</i></div>
+            </th>
+            <th width="70">排序</th>
+            <th>栏目名</th>
+            <th width="50">状态</th>
+            <th width="220">操作</th>
+        </thead>
+        <tbody class="x-cate"></tbody>
+    </table>
+</div>
+<style type="text/css">
+
+</style>
+<script>
+    layui.use(['form'], function () {
+        form = layui.form,
+        $ = layui.$;
+        window.$ = $;
+
+    });
+
+    /*用户-删除*/
+    function member_del(obj, id) {
+        layer.confirm('确认要删除吗？', function (index) {
+            //发异步删除数据
+            $(obj).parents("tr").remove();
+            layer.msg('已删除!', {icon: 1, time: 1000});
+        });
+    }
+
+
+    function delAll(argument) {
+
+        var data = tableCheck.getData();
+
+        layer.confirm('确认要删除吗？' + data, function (index) {
+            //捉到所有被选中的，发异步进行删除
+            layer.msg('删除成功', {icon: 1});
+            $(".layui-form-checked").not('.header').parents('tr').remove();
+        });
+    }
+
+
+    //创建树形表格
+    var $level = 0;
+    var createTreeTable = function (data) {
+        var html = '';
+        fengtoos.server({
+            url: cmc_server + 'category/tree',
+            type: 'get',
+            data: data,
+            success: function(resp){
+                if(resp && resp.success){
+                    var list = resp.payload;
+                    for(var i in list){
+                        $level = 0;
+                        list[i].level = $level;
+                        html += makeLine(list[i]) + makeTree(list[i]);
+                    }
+                }
+            }
+        })
+        html = html == '' ? '<tr><td colspan="6" style="text-align: center">暂无数据</td></tr>' : html;
+        $('.x-cate').html(html);
+    }
+
+    var makeTree = function (data) {
+        var html = '';
+        if(data.children != null){
+            $level++;
+            var children = data.children;
+            for(var i in children){
+                children[i].level = $level;
+                html += makeLine(children[i]) + makeTree(children[i])
+            }
+        }
+        return html
+    }
+
+    var makeLine = function(params) {
+        var empty = '';
+        var _params = {
+            id: null,
+            parentId: 0,
+            name: null,
+            sortOrder: null,
+            status: null,
+            level: 0,
+            isLast: false
+        };
+
+        params = $.extend({}, _params, params);
+
+        //开启名称空格
+        for(var i = 0; i < params.level; i++){
+            empty += '&nbsp;&nbsp;&nbsp;&nbsp;'
+        }
+
+        //是否为最后一个元素
+        if(params.children == null){
+            params.isLast = true
+        }
+
+        var line = '<tr cate-id="' + params.id + '" fid="' + params.parentId + '">' +
+            '<td>' +
+            '   <div class="layui-unselect layui-form-checkbox" lay-skin="primary" data-id="2"><i class="layui-icon">&#xe605;</i></div>' +
+            '</td>' +
+            '<td>' + params.sortOrder + '</td>' +
+            '<td>' + empty +
+            (params.isLast?'':'<i class="layui-icon x-show" status="true">&#xe623;</i>') +
+            params.name + '</td>' +
+            '<td><input type="checkbox" name="status" value="' + params.status + '" lay-text="开启|停用" ' +
+            (params.status?'checked':'') +
+            ' lay-skin="switch"></td>' +
+            '<td class="td-manage">' +
+            '   <button class="layui-btn layui-btn layui-btn-xs" onclick="x_admin_show(\'编辑\',\'admin-edit.html\')">' +
+            '       <i class="layui-icon">&#xe642;</i>编辑</button>' +
+            '   <button class="layui-btn layui-btn-warm layui-btn-xs" onclick="x_admin_show(\'编辑\',\'admin-edit.html\')">' +
+            '       <i class="layui-icon">&#xe642;</i>添加子栏目</button>' +
+            '   <button class="layui-btn-danger layui-btn layui-btn-xs" onclick="member_del(this,\'要删除的id\')"' +
+            ' href="javascript:;"><i class="layui-icon">&#xe640;</i>删除</button>' +
+            '</td>' +
+            '</tr>';
+
+        return line;
+    }
+    createTreeTable(null);
+
+    $('#data_total').text(function(){
+        return '共有数据：' + $('tbody.x-cate tr').length + ' 条';
+    });
+</script>
+<script type="text/javascript" src="./js/xadmin.js"></script>
+</body>
+
+</html>
