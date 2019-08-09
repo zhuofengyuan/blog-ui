@@ -89,9 +89,9 @@
         });
 
         //执行一个 table 实例
-        var userTable = table.render({
+        var productTable = table.render({
             elem: '#admin_table'
-            , url: oauth_server + 'user/list' //数据接口
+            , url: cmc_server + 'product/list' //数据接口
             , title: '用户表'
             , page: true //开启分页
             // ,toolbar: 'default' //开启工具栏，此处显示默认图标，可以自定义模板，详见文档
@@ -108,23 +108,23 @@
             , headers: getToken()
             , cols: [[ //表头
                 {type: 'checkbox'}
-                , {field: 'username', title: '用户名'}
-                , {field: 'screenName', title: '昵称'}
-                , {field: 'email', title: '电子邮件'}
-                , {field: 'phone', title: '手机号码'}
-                , {field: 'created', title: '创建时间'}
-                , {title: '操作', align: 'center', toolbar: '#barUser'}
+                , {field: 'brandName', title: '品牌', width: '10%'}
+                , {field: 'categoryName', title: '分类', width: '10%'}
+                , {field: 'spuName', title: '名称'}
+                , {field: 'price', title: '价格（元）', width: '10%'}
+                , {field: 'updateTime', title: '最后修改时间', width: '15%'}
+                , {title: '操作', align: 'center', toolbar: '#barUser', width: '15%'}
             ]]
         });
 
         $("#admin_add").click(function () {
             x_admin_show_back({title: '添加用户', url: './admin-add.html', end: function () {
-                reloadTable();
-            }});
+                    reloadTable();
+                }});
         });
 
         function reloadTable(){
-            userTable.reload();
+            productTable.reload();
         }
 
         //监听行工具事件
